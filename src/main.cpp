@@ -1,3 +1,12 @@
+/*
+
+copyright (c) 2022 christophe.bobille - LOCODUINO - www.locoduino.org
+
+
+*/
+
+
+
 #ifndef ARDUINO_ARCH_ESP32
 #error "Select an ESP32 board"
 #endif
