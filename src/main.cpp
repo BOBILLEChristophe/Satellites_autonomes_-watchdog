@@ -9,7 +9,7 @@ copyright (c) 2022 christophe.bobille - LOCODUINO - www.locoduino.org
 #error "Select an ESP32 board"
 #endif
 
-#define VERSION "v 0.4"
+#define VERSION "v 0.5"
 #define PROJECT "Satellites Watchdog"
 
 #include <ACAN_ESP32.h>
@@ -21,7 +21,7 @@ volatile int64_t lastHeartbeatTime[tabIdSize] = {0}; // Tableau pour stocker le 
 
 const int64_t watchdogTimeout = 500;     // en millisecondes
 const int64_t stillLivingInterval = 250; // en millisecondes
-const int64_t recMsgInterval = 1;       // en millisecondes
+const int64_t recMsgInterval = 1;        // en millisecondes
 
 void IRAM_ATTR stillLiving(void *parameter)
 {
