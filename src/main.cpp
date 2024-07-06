@@ -9,7 +9,7 @@ copyright (c) 2022 christophe.bobille - LOCODUINO - www.locoduino.org
 #error "Select an ESP32 board"
 #endif
 
-#define VERSION "v 0.5"
+#define VERSION "v 0.6"
 #define PROJECT "Satellites Watchdog"
 
 #include <ACAN_ESP32.h>
@@ -69,7 +69,6 @@ void IRAM_ATTR recMsg(void *parameter)
     {
       idSatExpediteur = (frame.id & 0x7F800) >> 11; // ID du satellite qui envoie
       lastHeartbeatTime[idSatExpediteur] = millis();
-      Serial.print(idSatExpediteur);
     }
     vTaskDelay(pdMS_TO_TICKS(recMsgInterval));
   }
