@@ -69,6 +69,7 @@ void IRAM_ATTR recMsg(void *parameter)
     {
       idSatExpediteur = (frame.id & 0x7F800) >> 11; // ID du satellite qui envoie
       lastHeartbeatTime[idSatExpediteur] = millis();
+      Serial.print(idSatExpediteur);
     }
     vTaskDelay(pdMS_TO_TICKS(recMsgInterval));
   }
