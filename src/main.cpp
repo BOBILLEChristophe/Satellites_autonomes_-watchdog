@@ -9,9 +9,10 @@ copyright (c) 2022 christophe.bobille - LOCODUINO - www.locoduino.org
 #error "Select an ESP32 board"
 #endif
 
-#define VERSION "v 0.6"
+#define VERSION "v 0.7"
 #define PROJECT "Satellites Watchdog"
 
+#include <Arduino.h>
 #include <ACAN_ESP32.h>
 static const uint32_t CAN_BITRATE = 1000UL * 1000UL; // 1 Mb/s
 
@@ -23,9 +24,12 @@ const int64_t watchdogTimeout = 500;     // en millisecondes
 const int64_t stillLivingInterval = 250; // en millisecondes
 const int64_t recMsgInterval = 1;        // en millisecondes
 
+const byte pinLed = 14;
+
 void IRAM_ATTR stillLiving(void *parameter)
 {
   (void)parameter;
+  pinMode(pinLed, OUTPUT);
 
   for (;;)
   {
@@ -51,10 +55,12 @@ void IRAM_ATTR stillLiving(void *parameter)
         frame.len = 0;
         const bool ok = ACAN_ESP32::can.tryToSend(frame);
         Serial.print("Aucun signe de vie pour le satellite ");
+        digitalWrite(pinLed, LOW);
         Serial.println(i);
       }
     }
     vTaskDelay(pdMS_TO_TICKS(stillLivingInterval)); // Attendre avant de vérifier à nouveau les battements de cœur
+    digitalWrite(pinLed, HIGH);
   }
 }
 
