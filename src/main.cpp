@@ -9,15 +9,15 @@ copyright (c) 2022 christophe.bobille - LOCODUINO - www.locoduino.org
 #error "Select an ESP32 board"
 #endif
 
-#define VERSION "v 0.7"
+#define VERSION "v 0.7.1"
 #define PROJECT "Satellites Watchdog"
 
 #include <Arduino.h>
 #include <ACAN_ESP32.h>
-static const uint32_t CAN_BITRATE = 1000UL * 1000UL; // 1 Mb/s
+static const uint32_t CAN_BITRATE = 250UL * 1000UL; // 250 Kb/s
 
-const byte thisNodeId = 252; // N° de nœud CAN du TCO sur le bus
-const uint8_t tabIdSize = 250;
+const uint16_t thisNodeId = 252; // N° de nœud CAN du watchdog sur le bus
+const uint16_t tabIdSize = 250;
 volatile int64_t lastHeartbeatTime[tabIdSize] = {0}; // Tableau pour stocker le temps du dernier battement de cœur
 
 const int64_t watchdogTimeout = 500;     // en millisecondes
@@ -42,17 +42,17 @@ void IRAM_ATTR stillLiving(void *parameter)
         // Déclencher la procédure d'erreur pour i+1
         CANMessage frame;
         /************************ ACAN : paramètres du messages *******************/
-        // Structure de l'identifiant des messages CAN : https://www.locoduino.org/IMG/png/satautonomes_messageriecan_v1.png
         const byte prio = 0x00;     // Priorité
-        const byte commande = 0xFF; // Commande
+        const byte commande = 0x00; // Commande
         const byte resp = 0x00;     // Ceci n'est pas une réponse
 
-        frame.id |= prio << 27;       // Priorite 0, 1 ou 2
-        frame.id |= commande << 19;   // commande appelée
-        frame.id |= thisNodeId << 11; // ID expediteur
-        frame.id |= resp << 2;        // Response
+        frame.id |= prio << 25;     // Priorite 0, 1 ou 2
+        frame.id |= commande << 17; // commande appelée
+        frame.id |= resp << 16;     // Response
+        frame.id |= thisNodeId;     // ID expediteur
         frame.ext = true;
-        frame.len = 0;
+        frame.len = 5;
+        frame.data[4] = 0x02;       // Emergency stop
         const bool ok = ACAN_ESP32::can.tryToSend(frame);
         Serial.print("Aucun signe de vie pour le satellite ");
         digitalWrite(pinLed, LOW);
@@ -73,7 +73,7 @@ void IRAM_ATTR recMsg(void *parameter)
     CANMessage frame;
     if (ACAN_ESP32::can.receive(frame))
     {
-      idSatExpediteur = (frame.id & 0x7F800) >> 11; // ID du satellite qui envoie
+      idSatExpediteur = frame.id & 0xFFFF;           // ID du satellite qui envoie
       lastHeartbeatTime[idSatExpediteur] = millis();
     }
     vTaskDelay(pdMS_TO_TICKS(recMsgInterval));
@@ -82,7 +82,6 @@ void IRAM_ATTR recMsg(void *parameter)
 
 void setup()
 {
-
   // Start serial
   Serial.begin(115200);
   while (!Serial)
@@ -101,7 +100,7 @@ void setup()
   settings.mRxPin = GPIO_NUM_22;
   settings.mTxPin = GPIO_NUM_23;
   const ACAN_ESP32_Filter filter = ACAN_ESP32_Filter::singleExtendedFilter(
-      ACAN_ESP32_Filter::data, 0xE0 << 19, 0x1807FFFF);
+      ACAN_ESP32_Filter::data, 0xE0 << 17, 0x1E01FFFF);
   uint32_t errorCode = ACAN_ESP32::can.begin(settings, filter);
   if (errorCode == 0)
     Serial.print("ok !\n");
